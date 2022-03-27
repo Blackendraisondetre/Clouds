@@ -1,84 +1,146 @@
 from tkinter import *
 import threading
 
-ans = [x for x in range(4)]
+# Start`s parameters
+ArrayAnswer = [x for x in range(4)]
 res = 0
 
+# # Creating form
 root = Tk()
 root.title("Лабораторна робота № 3 Палагін_Чураков_Васалатій_Паталашко")
-root.geometry("650x600")
+root.geometry("650x540")
 
-variant = {1:[110,20, "red"], 2:[160,60, "black"], 3:[170,50, "blue"], 4:[180,40, "purple"]}
+# # Creating data of each variant
+variant = {1: [110, 20, "red"],
+           2: [160, 60, "black"],
+           3: [170, 50, "blue"],
+           4: [180, 40, "purple"]}
 
-canvas = Canvas()
+# # Creating properties
+CanvasShiftX, CanvasShiftY = 30, 150
+LocationMainInfoX, LocationMainInfoY = 160, 20
+LabelShiftX, LabelShiftY = 30, 80
+TotalThreadLabelX, TotalThreadLabelY = 130, 400
+TotalInfoX, TotalInfoY = 230, 400
+RadioButtonShiftX = 65
 
-pos_1, pos_2 = 30, 150
+# # Creating arrays of elements
+# # # Creating array of canvases
+Canvas = Canvas()
+ArrayCanvas = []
 for x in variant.values():
-    canvas.create_rectangle(pos_1+40, pos_2, pos_1+100, pos_2+10, fill=x[2])
-    pos_1 += 150
+    ArrayCanvas.append(Canvas.create_rectangle(CanvasShiftX + 40,
+                                               CanvasShiftY,
+                                               CanvasShiftX + 100,
+                                               CanvasShiftY + 10,
+                                               fill=x[2]))
+    CanvasShiftX += 150
+CanvasShiftX, CanvasShiftY = 30, 150
 
-Counter = Label(text=f"Площа прямокутників в пікселях", fg = "black", font = "Arial 16 bold")
-Counter.place(x=160,y=20)
-
-def calc(a,b,index):
-    global ans
-    ans[index] = a*b
-
-def fin(ans):
-    global res
-    res = sum(ans)
-
-Threading = [threading.Thread(target = calc, args=(values[0],values[1], keys-1), name=f"thr-{keys}") for keys,values in variant.items()]
-Threading.append(threading.Thread(target = fin, args=[ans], name="thr-5"))
-
-pos_1, pos_2 = 30, 80
-
+# # # Creating array of labels
+ArrayLabel = []
 for x in range(len(variant)):
-    #Threading[x].start()
-    lab_1 = Label(text=f"", fg=f"{variant[x+1][2]}", font="Arial 16 bold")
-    lab_1.place(x=pos_1+35, y=pos_2)
-    lab_0 = Label(text=f"Thread {x+1}", fg="grey", font="Arial 16")
-    lab_0.place(x=pos_1 + 30, y=pos_2+30)
-    pos_1 +=150
+    ArrayLabel.append(Label(text=f"1", fg=f"{variant[x + 1][2]}", font="Arial 16 bold"))
 
-#Threading[4].start()
+# # # Creating array of threads
+def calc(a, b, index):
+    global ArrayAnswer
+    ArrayAnswer[index] = float(a * b)
 
-lab_2 = Label(text=f"Thread 5", fg="grey", font="Arial 16")
-lab_2.place(x=130, y=400)
+def fin(list):
+    global res
+    Sum = 0.0
 
-lab_3 = Label(text=f"Загальна площа пікселів {float(res)}", font="Arial 16")
-lab_3.place(x=230, y=400)
+    for x in range(len(list)):
+        if list[x]:
+            Sum += float(variant[x + 1][0] * variant[x + 1][1])
+    res = Sum
 
-canvas.pack(fill=BOTH, expand=1)
+#ArrayThread = [threading.Thread(target = calc, args=(values[0], values[1], keys - 1), name=f"thr-{keys}") for keys, values in variant.items()]
+#ArrayThread.append(threading.Thread(target=fin, args=[ArrayAnswer], name="thr-5"))
 
-r_var = []
-pos_1 = 65
+# # # Creating array of RadioButtons
+ArrayRadioButton = []
 
 def act():
-    for x in range(len(r_var)):
-        if r_var[x]:
-            pass
+    global CanvasShiftX, CanvasShiftY, res
+
+    ArrrayChanges = []
+
+    for x in range(len(ArrayRadioButton)):
+        if ArrayRadioButton[x].get():
+            ArrrayChanges.append(1)
+
+            thread = threading.Thread(target=calc,
+                                      args=(variant[x + 1][0],
+                                            variant[x + 1][1], x),
+                                      name=f"thr-{x + 1}")
+            thread.start()
+
+            ArrayLabel[x]['text'] = ArrayAnswer[x]
+            Canvas.coords(ArrayCanvas[x],
+                          CanvasShiftX + 40,
+                          CanvasShiftY,
+                          CanvasShiftX + 40 + variant[x + 1][1],
+                          CanvasShiftY + variant[x + 1][0])
+        else:
+            ArrrayChanges.append(0)
+
+            ArrayLabel[x]['text'] = ""
+            Canvas.coords(ArrayCanvas[x],
+                          CanvasShiftX + 40,
+                          CanvasShiftY,
+                          CanvasShiftX + 100,
+                          CanvasShiftY + 10,)
+        CanvasShiftX += 150
+
+    thread = threading.Thread(target=fin,
+                              args=([ArrrayChanges]),
+                              name=f"thr-fin")
+    thread.start()
+
+    TotalInfo["text"] = f"Загальна площа пікселів {res}"
+
+    CanvasShiftX, CanvasShiftY = 30, 150
+
 
 for x in range(len(variant)):
-    r_var.append(BooleanVar())
-    r_var[-1].set(0)
+    ArrayRadioButton.append(BooleanVar())
+    ArrayRadioButton[-1].set(0)
 
-    radio_1 = Radiobutton(text='Start', variable=r_var[-1], value=1, font="Arial 12", command=act)
-    radio_2 = Radiobutton(text='Cancel', variable=r_var[-1], value=0, font="Arial 12", command=act)
+# Start form
+# # Creating Main info label
+MainInfo = Label(text=f"Площа прямокутників в пікселях", fg="black", font="Arial 16 bold")
+MainInfo.place(x=LocationMainInfoX, y=LocationMainInfoY)
 
-    radio_1.place(x=pos_1, y=500)
-    radio_2.place(x=pos_1, y=540)
+# # Creating labels and thread info labels
+for x in range(len(variant)):
+    ArrayLabel[x].place(x=LabelShiftX + 35, y=LabelShiftY)
 
-    pos_1 += 150
+    ThreadInfoLabel = Label(text=f"Thread {x + 1}", fg="grey", font="Arial 16")
+    ThreadInfoLabel.place(x=LabelShiftX + 30, y=LabelShiftY + 30)
 
+    LabelShiftX += 150
 
+# # Creating Canvases
+Canvas.pack(fill=BOTH, expand=1)
 
+# # Creating total thread label
+TotalThreadLabel = Label(text=f"Thread 5", fg="grey", font="Arial 16")
+TotalThreadLabel.place(x=130, y=400)
 
+# # Creating Total info label
+TotalInfo = Label(text=f"Загальна площа пікселів {float(res)}", font="Arial 16")
+TotalInfo.place(x=TotalInfoX, y=TotalInfoY)
 
+# # Creating RadioButtons
+for x in range(len(ArrayRadioButton)):
+    RadioButtonStart = Radiobutton(text='Start', variable=ArrayRadioButton[x], value=1, font="Arial 12", command=act)
+    RadioButtonCancel = Radiobutton(text='Cancel', variable=ArrayRadioButton[x], value=0, font="Arial 12", command=act)
 
+    RadioButtonStart.place(x=RadioButtonShiftX, y=450)
+    RadioButtonCancel.place(x=RadioButtonShiftX, y=490)
 
-
-
-
+    RadioButtonShiftX += 150
 
 root.mainloop()
